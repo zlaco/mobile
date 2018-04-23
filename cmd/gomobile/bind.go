@@ -21,7 +21,7 @@ import (
 var cmdBind = &command{
 	run:   runBind,
 	Name:  "bind",
-	Usage: "[-target android|ios] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
+	Usage: "[-target android|ios|macos] [-bootclasspath <path>] [-classpath <path>] [-o output] [build flags] [package]",
 	Short: "build a library for Android and iOS",
 	Long: `
 Bind generates language bindings for the package named by the import
@@ -85,6 +85,9 @@ func runBind(cmd *command) error {
 	}()
 	ctx.GOARCH = "arm"
 	ctx.GOOS = targetOS
+	if targetOS == "ios" || targetOS == "macos" {
+		ctx.GOOS = "darwin"
+	}
 
 	if bindJavaPkg != "" && ctx.GOOS != "android" {
 		return fmt.Errorf("-javapkg is supported only for android target")
@@ -133,11 +136,11 @@ func runBind(cmd *command) error {
 	switch targetOS {
 	case "android":
 		return goAndroidBind(gobind, pkgs, targetArchs)
-	case "darwin":
+	case "ios", "macos":
 		if !xcodeAvailable() {
 			return fmt.Errorf("-target=ios requires XCode")
 		}
-		return goIOSBind(gobind, pkgs, targetArchs)
+		return goIOSBind(gobind, pkgs, targetOS, targetArchs)
 	default:
 		return fmt.Errorf(`invalid -target=%q`, buildTarget)
 	}

@@ -14,7 +14,7 @@ import (
 	"text/template"
 )
 
-func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
+func goIOSBind(gobind string, pkgs []*build.Package, targetOS string, archs []string) error {
 	// Run gobind to generate the bindings
 	cmd := exec.Command(
 		gobind,
@@ -59,6 +59,9 @@ func goIOSBind(gobind string, pkgs []*build.Package, archs []string) error {
 
 	for _, arch := range archs {
 		env := darwinEnv[arch]
+		if targetOS == "macos" {
+			env = macEnv[arch]
+		}
 		env = append(env, gopath)
 		path, err := goIOSBindArchive(name, env)
 		if err != nil {

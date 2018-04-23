@@ -315,7 +315,7 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	archNames := []string{}
 	for i, p := range strings.Split(buildTarget, ",") {
 		osarch := strings.SplitN(p, "/", 2) // len(osarch) > 0
-		if osarch[0] != "android" && osarch[0] != "ios" {
+		if osarch[0] != "android" && osarch[0] != "ios" && osarch[0] != "macos" {
 			return "", nil, fmt.Errorf(`unsupported os`)
 		}
 
@@ -335,8 +335,16 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	}
 
 	// verify all archs are supported one while deduping.
+	var supported []string
+	switch os {
+	case "ios", "android":
+		supported = allArchs
+	case "macos":
+		supported = []string{"amd64"}
+	}
+
 	isSupported := func(arch string) bool {
-		for _, a := range allArchs {
+		for _, a := range supported {
 			if a == arch {
 				return true
 			}
@@ -358,11 +366,8 @@ func parseBuildTarget(buildTarget string) (os string, archs []string, _ error) {
 	}
 
 	targetOS := os
-	if os == "ios" {
-		targetOS = "darwin"
-	}
 	if all {
-		return targetOS, allArchs, nil
+		return targetOS, supported, nil
 	}
 	return targetOS, archs, nil
 }

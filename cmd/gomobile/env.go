@@ -19,6 +19,7 @@ var (
 	androidEnv map[string][]string // android arch -> []string
 
 	darwinEnv map[string][]string
+	macEnv    map[string][]string
 
 	androidArmNM string
 	darwinArmNM  string
@@ -134,6 +135,22 @@ func envInit() (err error) {
 		)
 		darwinEnv[arch] = env
 	}
+	clang, cflags, err := envClang("macosx")
+	if err != nil {
+		return err
+	}
+	macEnv = map[string][]string{
+		"amd64": {
+			"GOOS=darwin",
+			"GOARCH=amd64",
+			"GOTAG=macos",
+			"CC=" + clang,
+			"CXX=" + clang,
+			"CGO_CFLAGS=" + cflags + " -arch x86_64",
+			"CGO_LDFLAGS=" + cflags + " -arch x86_64",
+			"CGO_ENABLED=1",
+		},
+	}
 
 	return nil
 }
@@ -226,6 +243,14 @@ func getenv(env []string, key string) string {
 		}
 	}
 	return ""
+}
+
+func pkgdir(env []string) string {
+	pd := gomobilepath + "/pkg_" + getenv(env, "GOOS") + "_" + getenv(env, "GOARCH")
+	if tag := getenv(env, "GOTAG"); tag != "" {
+		pd += "_" + tag
+	}
+	return pd
 }
 
 func archNDK() string {
